@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package task;
+
+option go_package = "github.com/vegitobluefan/task-manager/proto;task";
+
+service TaskService {
+  rpc ExecuteTask (TaskRequest) returns (TaskResponse);
+}
+
+message TaskRequest {
+  string id = 1;
+  string type = 2;
+  string payload = 3;
+}
+
+message TaskResponse {
+  string id = 1;
+  string status = 2;
+  string result = 3;
+}
