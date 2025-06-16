@@ -4,6 +4,13 @@ import (
 	"log"
 	"time"
 
+	"database/sql"
+	"fmt"
+	"os"
+
+	_ "github.com/lib/pq"
+	"github.com/vegitobluefan/task-manager/infrastructure/postgres"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/vegitobluefan/task-manager/api"
@@ -13,20 +20,25 @@ import (
 )
 
 func main() {
-	memRepo := &InMemoryRepo{tasks: map[string]*domain.Task{}}
+	db, err := connectToDB()
+	if err != nil {
+		log.Fatalf("Failed to connect to DB: %v", err)
+	}
+
+	repo := postgres.NewPostgresRepo(db)
 
 	handler := func(task *domain.Task) {
-		time.Sleep(time.Second * 5)
-		_ = memRepo.UpdateStatus(task.ID, "done", "slept 5s")
+		time.Sleep(5 * time.Second)
+		_ = repo.UpdateStatus(task.ID, "done", "slept 5s")
 	}
 
 	d := dispatcher.NewDispatcher(4, handler)
-	uc := usecase.NewTaskUseCase(memRepo, d)
+	uc := usecase.NewTaskUseCase(repo, d)
+
 	r := gin.Default()
-	api.SetupRoutes(r, uc, memRepo)
+	api.SetupRoutes(r, uc, repo)
 
-	log.Println("Запуск сервера на порту :8080")
-
+	log.Println("🚀 Сервер запущен на :8080")
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal(err)
 	}
@@ -61,4 +73,17 @@ func (r *InMemoryRepo) List() ([]*domain.Task, error) {
 		tasks = append(tasks, task)
 	}
 	return tasks, nil
+}
+
+func connectToDB() (*sql.DB, error) {
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname)
+
+	return sql.Open("postgres", dsn)
 }

@@ -2,20 +2,37 @@ syntax = "proto3";
 
 package task;
 
-option go_package = "github.com/vegitobluefan/task-manager/proto;task";
-
-service TaskService {
-  rpc ExecuteTask (TaskRequest) returns (TaskResponse);
-}
+option go_package = "github.com/vegitobluefan/task-manager/proto/task";
 
 message TaskRequest {
   string id = 1;
-  string type = 2;
-  string payload = 3;
 }
 
 message TaskResponse {
   string id = 1;
-  string status = 2;
-  string result = 3;
+  string type = 2;
+  string status = 3;
+  string payload = 4;
+  string result = 5;
+}
+
+message TaskListRequest {}
+
+message TaskListResponse {
+  repeated TaskResponse tasks = 1;
+}
+
+message CreateTaskRequest {
+  string type = 1;
+  string payload = 2;
+}
+
+message CreateTaskResponse {
+  string id = 1;
+}
+
+service TaskService {
+  rpc GetTask(TaskRequest) returns (TaskResponse);
+  rpc ListTasks(TaskListRequest) returns (TaskListResponse);
+  rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse);
 }
