@@ -12,5 +12,5 @@ type TaskRepository interface {
 	Save(task *Task) error
 	UpdateStatus(id string, status string, result string) error
 	GetByID(id string) (*Task, error)
-	List() ([]*Task, error)
+	ListTasks() ([]*Task, error)
 }

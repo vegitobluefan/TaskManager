@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package task;
 
-option go_package = "github.com/vegitobluefan/task-manager/proto/task";
+option go_package = "github.com/vegitobluefan/task-manager/proto";
 
 message TaskRequest {
   string id = 1;

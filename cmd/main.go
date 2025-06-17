@@ -9,13 +9,14 @@ import (
 	"os"
 
 	_ "github.com/lib/pq"
-	"github.com/vegitobluefan/task-manager/infrastructure/postgres"
+	"github.com/vegitobluefan/task-manager/repository"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/vegitobluefan/task-manager/api"
 	"github.com/vegitobluefan/task-manager/dispatcher"
 	"github.com/vegitobluefan/task-manager/domain"
+	"github.com/vegitobluefan/task-manager/grpc"
 	"github.com/vegitobluefan/task-manager/usecase"
 )
 
@@ -25,7 +26,7 @@ func main() {
 		log.Fatalf("Failed to connect to DB: %v", err)
 	}
 
-	repo := postgres.NewPostgresRepo(db)
+	repo := repository.NewPostgresRepo(db)
 
 	handler := func(task *domain.Task) {
 		time.Sleep(5 * time.Second)
@@ -38,7 +39,12 @@ func main() {
 	r := gin.Default()
 	api.SetupRoutes(r, uc, repo)
 
-	log.Println("🚀 Сервер запущен на :8080")
+	go func() {
+		if err := grpc.RunGRPCServer(uc, ":50051"); err != nil {
+			log.Fatalf("gRPC сервер завершился с ошибкой: %v", err)
+		}
+	}()
+
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal(err)
 	}

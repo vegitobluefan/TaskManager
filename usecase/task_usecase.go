@@ -1,32 +1,50 @@
 package usecase
 
-import "github.com/vegitobluefan/task-manager/domain"
+import (
+	"errors"
 
-// Интерфейс юзкейса
+	"github.com/vegitobluefan/task-manager/dispatcher"
+	"github.com/vegitobluefan/task-manager/domain"
+)
+
 type TaskUseCase interface {
-	Enqueue(task *domain.Task) error
+	Enqueue(task *domain.Task) (string, error)
+	GetTask(id string) (*domain.Task, error)
+	ListTasks() ([]*domain.Task, error)
 }
 
-// Интерфейс диспетчера
-type TaskDispatcher interface {
-	Dispatch(task *domain.Task) error
-}
-
-// Реализация юзкейса
 type taskUseCase struct {
 	repo       domain.TaskRepository
-	dispatcher TaskDispatcher
+	dispatcher *dispatcher.Dispatcher
 }
 
-// Конструктор
-func NewTaskUseCase(r domain.TaskRepository, d TaskDispatcher) TaskUseCase {
-	return &taskUseCase{repo: r, dispatcher: d}
-}
-
-// Метод постановки задачи в очередь
-func (u *taskUseCase) Enqueue(task *domain.Task) error {
-	if err := u.repo.Save(task); err != nil {
-		return err
+func NewTaskUseCase(repo domain.TaskRepository, d *dispatcher.Dispatcher) TaskUseCase {
+	return &taskUseCase{
+		repo:       repo,
+		dispatcher: d,
 	}
-	return u.dispatcher.Dispatch(task)
+}
+
+func (uc *taskUseCase) Enqueue(task *domain.Task) (string, error) {
+	err := uc.repo.Save(task)
+	if err != nil {
+		return "", err
+	}
+	uc.dispatcher.Enqueue(task)
+	return task.ID, nil
+}
+
+func (uc *taskUseCase) GetTask(id string) (*domain.Task, error) {
+	task, err := uc.repo.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if task == nil {
+		return nil, errors.New("task not found")
+	}
+	return task, nil
+}
+
+func (uc *taskUseCase) ListTasks() ([]*domain.Task, error) {
+	return uc.repo.ListTasks()
 }

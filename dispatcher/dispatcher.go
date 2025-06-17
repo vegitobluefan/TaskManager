@@ -2,36 +2,48 @@ package dispatcher
 
 import (
 	"log"
+	"sync"
 
 	"github.com/vegitobluefan/task-manager/domain"
 )
 
 type Dispatcher struct {
-	queue   chan *domain.Task
-	workers int
+	workerCount int
+	queue       chan *domain.Task
+	handler     func(task *domain.Task)
+	wg          sync.WaitGroup
 }
 
-type HandlerFunc func(task *domain.Task)
-
-func NewDispatcher(workers int, handler HandlerFunc) *Dispatcher {
+func NewDispatcher(workerCount int, handler func(task *domain.Task)) *Dispatcher {
 	d := &Dispatcher{
-		queue:   make(chan *domain.Task, 100),
-		workers: workers,
+		workerCount: workerCount,
+		queue:       make(chan *domain.Task, 100),
+		handler:     handler,
 	}
 
-	for i := 0; i < workers; i++ {
-		go func(id int) {
-			for task := range d.queue {
-				log.Printf("[Worker %d] Processing task %s", id, task.ID)
-				handler(task)
-			}
-		}(i)
-	}
-
+	d.start()
 	return d
 }
 
-func (d *Dispatcher) Dispatch(task *domain.Task) error {
+func (d *Dispatcher) start() {
+	for i := 0; i < d.workerCount; i++ {
+		d.wg.Add(1)
+		go func(workerID int) {
+			defer d.wg.Done()
+			for task := range d.queue {
+				log.Printf("[worker-%d] processing task: %s\n", workerID, task.ID)
+				d.handler(task)
+			}
+		}(i)
+	}
+}
+
+// 🔧 Вот этот метод тебе и нужен:
+func (d *Dispatcher) Enqueue(task *domain.Task) {
 	d.queue <- task
-	return nil
+}
+
+func (d *Dispatcher) Stop() {
+	close(d.queue)
+	d.wg.Wait()
 }

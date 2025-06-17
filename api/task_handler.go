@@ -29,12 +29,13 @@ func SetupRoutes(r *gin.Engine, uc usecase.TaskUseCase, repo domain.TaskReposito
 			Status:  "queued",
 		}
 
-		if err := uc.Enqueue(task); err != nil {
+		id, err := uc.Enqueue(task)
+		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		c.JSON(http.StatusAccepted, gin.H{"id": task.ID})
+		c.JSON(http.StatusAccepted, gin.H{"id": id})
 	})
 
 	r.GET("/tasks/:id", func(c *gin.Context) {
@@ -48,12 +49,11 @@ func SetupRoutes(r *gin.Engine, uc usecase.TaskUseCase, repo domain.TaskReposito
 	})
 
 	r.GET("/tasks", func(c *gin.Context) {
-		tasks, err := repo.List()
+		tasks, err := repo.ListTasks()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not retrieve tasks"})
 			return
 		}
 		c.JSON(http.StatusOK, tasks)
 	})
-
 }
