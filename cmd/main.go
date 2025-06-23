@@ -23,14 +23,14 @@ import (
 func main() {
 	db, err := connectToDB()
 	if err != nil {
-		log.Fatalf("Failed to connect to DB: %v", err)
+		log.Fatalf("Ошибка подключения к БД: %v", err)
 	}
 
 	repo := repository.NewPostgresRepo(db)
 
 	handler := func(task *domain.Task) {
 		time.Sleep(5 * time.Second)
-		_ = repo.UpdateStatus(task.ID, "done", "slept 5s")
+		_ = repo.UpdateStatus(task.ID, "выполнен", "сон 5с")
 	}
 
 	d := dispatcher.NewDispatcher(4, handler)
