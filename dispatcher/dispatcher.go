@@ -31,14 +31,13 @@ func (d *Dispatcher) start() {
 		go func(workerID int) {
 			defer d.wg.Done()
 			for task := range d.queue {
-				log.Printf("[worker-%d] processing task: %s\n", workerID, task.ID)
+				log.Printf("[worker-%d] выполняю задачу: %s\n", workerID, task.ID)
 				d.handler(task)
 			}
 		}(i)
 	}
 }
 
-// 🔧 Вот этот метод тебе и нужен:
 func (d *Dispatcher) Enqueue(task *domain.Task) {
 	d.queue <- task
 }

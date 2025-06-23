@@ -40,7 +40,7 @@ func (uc *taskUseCase) GetTask(id string) (*domain.Task, error) {
 		return nil, err
 	}
 	if task == nil {
-		return nil, errors.New("task not found")
+		return nil, errors.New("задача не найдена")
 	}
 	return task, nil
 }
